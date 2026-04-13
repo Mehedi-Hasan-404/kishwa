@@ -1,0 +1,37 @@
+name: Generate M3U Playlist
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'   
+  workflow_dispatch:          
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install aiohttp beautifulsoup4 cryptography
+
+      - name: Decrypt and run script
+        env:
+          SCRIPT_PASSWORD: ${{ secrets.SCRIPT_PASSWORD }}
+        run: |
+          python run_encrypted.py
+
+      - name: Commit updated M3U to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add livetvpro.m3u
+          git diff --cached --quiet || git commit -m "chore: update playlist [skip ci]"
+          git push
